@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chatbot</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      max-width: 960px;
+      margin: auto;
+      padding: 20px;
+      background: #f4f4f9 url('background-image.jpg') no-repeat center center fixed;
+      background-size: cover;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    #chat-container {
+      width: 60%;
+      margin: 0 auto;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    }
+    #chat {
+      border: 1px solid #ddd;
+      padding: 10px;
+      height: 400px;
+      overflow-y: auto;
+      margin: 10px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    }
+    .message {
+      margin-bottom: 10px;
+      padding: 10px;
+      border-radius: 4px;
+    }
+    .user {
+      text-align: right;
+      background: #e4f9e2;
+    }
+    .bot {
+      text-align: left;
+      background: #f0f0f0;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      margin: 5px;
+      border: none;
+      border-radius: 4px;
+    }
+    button {
+      width: 40%;
+      padding: 10px;
+      margin: 5px;
+      border: none;
+      border-radius: 4px;
+      background-color: #4CAF50;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    #chat-input {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .loading {
+      font-size: 14px;
+      color: #999;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="chat-container">
+    <h2>Chatbot</h2>
+    <div id="chat"></div>
+    <div id="chat-input">
+      <input type="text" id="message" placeholder="Digite sua mensagem..." />
+      <button id="send-button">Enviar</button>
+    </div>
+  </div>
+
+  <script>
+    const chat = document.getElementById('chat');
+    const messageInput = document.getElementById('message');
+    const sendButton = document.getElementById('send-button');
+
+    async function sendMessage() {
+      const message = messageInput.value.trim();
+      if (!message) return;
+
+      chat.innerHTML += `<div class="message user"><strong>Você:</strong> ${markdownToHtml(message)}</div>`;
+      messageInput.value = '';
+
+      const loadingMessage = document.createElement('div');
+      loadingMessage.className = 'loading';
+      loadingMessage.textContent = 'Carregando...';
+      chat.appendChild(loadingMessage);
+
+      chat.scrollTop = chat.scrollHeight;
+
+      const response = await fetch('/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message }),
+      });
+
+      const data = await response.json();
+      chat.removeChild(loadingMessage);
+
+      chat.innerHTML += `<div class="message bot"><strong>Bot:</strong> ${markdownToHtml(data.response)}</div>`;
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function markdownToHtml(markdown) {
+      const html = markdown
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>') // bold
+        .replace(/\*(.+?)\*/g, '<em>$1</em>') // italic
+        .replace(/(?:\r\n|\r|\n)/g, '<br>'); // line breaks
+      return html;
+    }
+
+    sendButton.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        sendMessage();
+      }
+    });
+  </script>
+</body>
+</html>
